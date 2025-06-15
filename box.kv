@@ -1,0 +1,85 @@
+<InitScreen>
+
+    canvas.before:
+        Color:
+            rgba: 1,1,1,1
+            
+        Rectangle:
+            size: root.size
+            
+    Button:
+        text: 'Connect'
+        size_hint: 0.4, 0.2
+        pos: root.width*0.4, root.height*0.3
+        on_press: root.initiate()
+
+<MainScreen>
+
+    canvas.before:
+        Color:
+            rgba: 1,1,1,1
+            
+        Rectangle:
+            size: root.size
+            
+    ScrollView:
+        size_hint: 1.0, 0.8
+        pos: 0, root.height*0.2
+        
+        Label:
+            id: chat_text_id
+            color: 0,0,0,1
+            size_hint_x: 1.0
+            size_hint_y: None
+            height: self.texture_size[1]
+            text_size: self.width, None
+            padding: 10, 10
+            
+    TextInput:
+        id: msg_id
+        size_hint: 0.6, 0.2
+        pos: 0, 0
+        focus: True
+
+    Button:
+        background_color: 0,0,0,0
+        size_hint: 0.2, 0.2
+        pos: root.width*0.6, 0
+        on_press: root.send_file()        
+		Image:
+			source: 'paperclip.png'
+			pos: self.parent.pos
+			size: self.parent.size
+			allow_stretch: True
+
+    Button:
+        background_color: 0,0,0,0
+        size_hint: 0.2, 0.2
+        pos: root.width*0.8, 0
+        on_press: root.send_msg()        
+		Image:
+			source: 'send.png'
+			pos: self.parent.pos
+			size: self.parent.size
+			allow_stretch: True
+			
+<LoadDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserIconView:
+            id: filechooser
+            path: './'
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+            Button:
+                text: "Load"
+                on_release: root.load(filechooser.path, filechooser.selection)
+
+
+        
