@@ -29,11 +29,13 @@ remote_cond = False
 listen_cond = False
 listen_msg = ''
 remote_msg = ''
+send_file=False
+files_to_send=[]
 HOST = '192.168.15.4' # cellphone's own IP
 PORT = 65432
 
 def sender():
-    global remote_msg
+    global remote_msg, send_file,files_to_send
     remote_ip = '192.168.15.99'
     remote_port = 65432
     while True:
@@ -46,6 +48,14 @@ def sender():
                     if remote_msg != '':
                         remote_socket.sendall(remote_msg.encode())# sendall sends bytes
                         remote_msg=''
+                    # checks if there is a file to send
+                    elif send_file==True:
+                        send_file=False
+                        for file in files_to_send:
+                            with open(file,"rb") as f:
+                                msg = f.read()
+                                remote_socket.sendall(msg)# sendall sends bytes
+                                files_to_send.remove(file)
         except:
             time.sleep(0.5)
             
@@ -119,7 +129,11 @@ class MainScreen(Screen):
         self._popup.open()
 
     def load_list(self, path, filename):
-        print(f'Selected {filename} at pah: {path}')
+        global send_file,files_to_send
+        print(f'Selected {filename} at path: {path}')
+        send_file=True
+        files_to_send=filename # filename is a list of selected files
+        self._popup.dismiss()
 
     def dismiss_popup(self):
         self._popup.dismiss()
