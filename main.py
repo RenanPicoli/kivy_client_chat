@@ -20,10 +20,21 @@ from kivy.properties import ObjectProperty
 
 from kivy import platform
 
+# for using shared storage
+from shutil import rmtree
+from os.path import exists, join
+from android import mActivity, autoclass, api_version
+from androidstorage4kivy import SharedStorage, Chooser
+from android_permissions import AndroidPermissions
+
+from kivy.logger import Logger
+
+'''
 if platform == "android":
     from android.permissions import request_permissions, Permission, check_permission  # pylint: disable=import-error # type: ignore
     request_permissions([Permission.READ_EXTERNAL_STORAGE,
                         Permission.WRITE_EXTERNAL_STORAGE])
+'''
 
 remote_cond = False
 listen_cond = False
@@ -105,6 +116,9 @@ class InitScreen(Screen):
 class MainScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        selected_path = ''
+        # create chooser listener
+        self.chooser = Chooser(self.chooser_callback)
         
     def send_msg(self):
         global remote_msg
@@ -121,12 +135,49 @@ class MainScreen(Screen):
             listen_msg = ''
             
     def send_file(self):
-        self.show_load_list()
+        #self.show_load_list()
+  
+        # cleanup from last time if Android didn't
+        temp = SharedStorage().get_cache_dir()
+        if temp and exists(temp):
+            rmtree(temp)
+            
+        self.chooser.choose_content("image/*")
+
+    # Chooser interface
+    #def chooser_start(self,bt):
+    #    self.chooser.choose_content("image/*")
+
+    def chooser_callback(self,uri_list):
+        try:
+            ss = SharedStorage()
+            for uri in uri_list:
+                # copy to private
+                self.selected_path = ss.copy_from_shared(uri)
+                #self.append(f"path = {self.selected_path}")
+                print(f"path = {self.selected_path}")
+                if self.selected_path:
+                    # then to app shared
+                    shared = ss.copy_to_shared(self.selected_path)
+                    #self.append(f"shared = {shared}")
+                    #self.append("Result copied to app shared "+\
+                    #            str(exists(self.selected_path) and shared != None))
+            #self.display()
+            self.show_load_list(self.selected_path)
+        except Exception as e:
+            Logger.warning('MyChat: SharedStorageExample.chooser_callback():')
+            Logger.warning(str(e))
         
-    def show_load_list(self):
+    def show_load_list(self,selected_path):
+        '''
         content = LoadDialog(load=self.load_list, cancel=self.dismiss_popup)
         self._popup = Popup(title="Load a file list", content=content, size_hint=(1, 1))
         self._popup.open()
+        '''
+        global send_file,files_to_send
+        print(f'Selected {selected_path}')
+        send_file=True
+        files_to_send=[selected_path] # filename is a list of selected files
 
     def load_list(self, path, filename):
         global send_file,files_to_send
@@ -140,6 +191,7 @@ class MainScreen(Screen):
     
 class BoxApp(App):
     def build(self):
+        Logger.info('MyChat: started build')
         Window.softinput_mode = 'below_target'
         
         self.screenm = ScreenManager(transition=FadeTransition())
@@ -152,12 +204,29 @@ class BoxApp(App):
         #screen = Screen(name="mainscreen")
         self.screenm.add_widget(self.mainscreen)
         
+        Logger.info('MyChat: succesful build')
         return self.screenm
 
+    def on_start(self):
+        self.dont_gc = AndroidPermissions(self.start_app)    
+
+    def start_app(self):
+        self.dont_gc = None
+        #ss = SharedStorage()
+        #app_title = str(ss.get_app_title())
+        #self.label_lines = []
+        #self.display()
+        #self.append("Cache Dir Exists:  " + str(exists(ss.get_cache_dir())))
+
 if __name__ == '__main__':
-    boxapp = BoxApp()
-    listen_cond = False
-    thread_1.start()
-    thread_2.start()
-    remote_cond = False
-    threading.Thread(target = boxapp.run()).start()
+    try:
+        Logger.info('MyChat: entry point at main:')
+        boxapp = BoxApp()
+        listen_cond = False
+        thread_1.start()
+        thread_2.start()
+        remote_cond = False
+        #threading.Thread(target = boxapp.run()).start()
+        boxapp.run()
+    except Exception as e:
+        Logger.info('MyChat: exception at main:'+str(e))
