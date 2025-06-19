@@ -18,6 +18,8 @@ from kivy.uix.image import Image
 from kivy.core.window import Window
 from kivy.properties import ObjectProperty
 
+import os
+
 from kivy import platform
 
 # for using shared storage
@@ -63,6 +65,13 @@ def sender():
                     elif send_file==True:
                         send_file=False
                         for file in files_to_send:
+                            fname = file.split("/")[-1]
+                            fsize = os.path.getsize(file)
+                            print(f"Preparing to send {fname}: {fsize} bytes")
+                            # sends a special text message, warning that will send a file of specified size
+                            msg = f"STOR {fname}:{fsize}"
+                            remote_socket.sendall(msg.encode())
+                            time.sleep(0.5)
                             with open(file,"rb") as f:
                                 msg = f.read()
                                 remote_socket.sendall(msg)# sendall sends bytes
