@@ -71,7 +71,7 @@ def sender():
                             # sends a special text message, warning that will send a file of specified size
                             msg = f"STOR {fname}:{fsize}"
                             remote_socket.sendall(msg.encode())
-                            time.sleep(0.5)
+                            time.sleep(0.1)
                             with open(file,"rb") as f:
                                 msg = f.read()
                                 remote_socket.sendall(msg)# sendall sends bytes
@@ -151,7 +151,9 @@ class MainScreen(Screen):
         if temp and exists(temp):
             rmtree(temp)
             
-        self.chooser.choose_content("image/*")
+        #self.chooser.choose_content("image/*", multiple = True)
+        #self.chooser.choose_content("video/*", multiple = True)
+        self.chooser.choose_content(multiple = True)
 
     # Chooser interface
     #def chooser_start(self,bt):
@@ -165,9 +167,9 @@ class MainScreen(Screen):
                 self.selected_path = ss.copy_from_shared(uri)
                 #self.append(f"path = {self.selected_path}")
                 print(f"path = {self.selected_path}")
-                if self.selected_path:
+                #if self.selected_path:
                     # then to app shared
-                    shared = ss.copy_to_shared(self.selected_path)
+                    #shared = ss.copy_to_shared(self.selected_path)
                     #self.append(f"shared = {shared}")
                     #self.append("Result copied to app shared "+\
                     #            str(exists(self.selected_path) and shared != None))
